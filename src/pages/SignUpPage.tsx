@@ -19,9 +19,9 @@ const SignUpPage: React.FC = () => {
         validateInputs();
     }, [imageSrc, email, password, confirmPassword, nickname]);
 
-    const validateInputs = () => {
+    const validateInputs = async () => {
         const isProfileImageValid = validateProfileImage(imageSrc);
-        const isEmailValid = validateEmail(email);
+        const isEmailValid = await validateEmail(email);
         const isPasswordValid = validatePassword(password);
         const isConfirmPasswordValid = validateConfirmPassword(password, confirmPassword);
         const isNicknameValid = valiateNickname(nickname);
@@ -40,7 +40,7 @@ const SignUpPage: React.FC = () => {
         }
     };
 
-    const validateEmail = (email: string) => {
+    const validateEmail = async (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const result = emailRegex.test(email);
 
@@ -49,8 +49,24 @@ const SignUpPage: React.FC = () => {
             else if (email.includes(' ')) setEmailHelperText("공백이 포함되어 있습니다.");
             else setEmailHelperText("올바르지 않은 이메일입니다.");
         }
-        else setEmailHelperText("");
-
+        else {
+            try {
+                const response = await fetch("http://localhost:8080/auth/users"); // 사용자 정보 fetch
+                const data = await response.json();
+                const existingEmail = data.find((user: { email: string; }) => user.email === email);
+                if (existingEmail) {
+                    setEmailHelperText("중복된 이메일입니다.");
+                    return false;
+                } else {
+                    setEmailHelperText("");
+                    return true;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("회원가입 중 오류가 발생했습니다.");
+                return false;
+            }
+        }
         return result;
     };
 
