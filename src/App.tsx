@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import SignInPage from './pages/SignInPage.tsx';
+import SignUpPage from './pages/SignUpPage.tsx';
 // import "../public/css/index.css";
 
 const App: React.FC = () => {
@@ -10,8 +11,8 @@ const App: React.FC = () => {
       <Routes>
         <Route path='/' element={<SignInPage />} />
         <Route path='/sign-in' element={<SignInPage />} />
-        {/* <Route path='/sign-up' element={<SignUpPage />} />
-        <Route path='/list-of-posts' element={<ListOfPosts />} />
+        <Route path='/sign-up' element={<SignUpPage />} />
+        {/* <Route path='/list-of-posts' element={<ListOfPosts />} />
         <Route path='/create-post' element={<CreatePost />} />
         <Route path='/update-post/:id' element={<UpdatePost />} />
         <Route path='/post-details' element={<PostDetails />} />
