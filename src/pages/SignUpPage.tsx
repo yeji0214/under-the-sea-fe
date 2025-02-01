@@ -3,7 +3,8 @@ import TitleImage from "../assets/images/title.png";
 import ButtonAddProfileImage from "../assets/images/button-add-profile-image.png"
 
 const SignUpPage: React.FC = () => {
-    const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [file, setFile] = useState<File>();
+    const [imageSrc, setImageSrc] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -29,8 +30,8 @@ const SignUpPage: React.FC = () => {
         setIsValid(isProfileImageValid && isEmailValid && isPasswordValid && isConfirmPasswordValid && isNicknameValid);
     };
 
-    const validateProfileImage = (imageSrc: string | null) => {
-        if (imageSrc === null || imageSrc === ButtonAddProfileImage) {
+    const validateProfileImage = (imageSrc: string) => {
+        if (imageSrc === "" || imageSrc === ButtonAddProfileImage) {
             setProfileImageHelperText("프로필 사진을 추가해주세요.");
             return false;
         }
@@ -133,24 +134,54 @@ const SignUpPage: React.FC = () => {
 
 
     const changeProfile = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
+        const selectedFile = e.target.files?.[0];
+        
+        if (selectedFile) {
+            setFile(selectedFile);
             const reader = new FileReader();
             reader.onload = (event) => {
                 setImageSrc(event.target?.result as string);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(selectedFile);
         }
         else {
             setImageSrc(ButtonAddProfileImage);
+            setFile(undefined);
         }
     };
 
-    const registerUser = () => {
+    const registerUser = async (event: { preventDefault: () => void; }) => {
+        event.preventDefault();
 
+        // FormData 준비
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+        formData.append('confirmPassword', confirmPassword); // 추가
+        formData.append('nickname', nickname);
+        if (file) {
+            formData.append('profilePicture', file);
+        }
+
+        try {
+            // 서버로 회원가입 요청
+            const response = await fetch('http://localhost:8080/auth/register', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                alert('회원가입이 완료되었습니다!');
+                window.location.href = '/sign-in';
+            } else {
+                const errorData = await response.json();
+                alert(`회원가입 실패: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('회원가입 중 오류 발생:', error);
+            alert('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
     };
-
-
 
     return (
         <div className="flex justify-center items-center h-screen bg-blue-100">
