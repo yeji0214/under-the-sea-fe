@@ -24,7 +24,7 @@ const SignUpPage: React.FC = () => {
         const isEmailValid = await validateEmail(email);
         const isPasswordValid = validatePassword(password);
         const isConfirmPasswordValid = validateConfirmPassword(password, confirmPassword);
-        const isNicknameValid = valiateNickname(nickname);
+        const isNicknameValid = await validateNickname(nickname);
 
         setIsValid(isProfileImageValid && isEmailValid && isPasswordValid && isConfirmPasswordValid && isNicknameValid);
     };
@@ -98,7 +98,7 @@ const SignUpPage: React.FC = () => {
         }
     };
 
-    const valiateNickname = (nickname: string) => {
+    const validateNickname = async (nickname: string) => {
         if (nickname === "") {
             setNicknameHelperText("닉네임을 입력해주세요.");
             return false;
@@ -112,8 +112,22 @@ const SignUpPage: React.FC = () => {
             return false;
         }
         else {
-            setNicknameHelperText("");
-            return true;
+            try {
+                const response = await fetch("http://localhost:8080/auth/users");// 사용자 정보 fetch
+                const data = await response.json();
+                const existingNickname = data.find((user: { nickname: string; }) => user.nickname === nickname);
+                if (existingNickname) {
+                    setNicknameHelperText("중복된 닉네임입니다.");
+                    return false;
+                } else {
+                    setNicknameHelperText("");
+                    return true;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("회원가입 중 오류가 발생했습니다.");
+                return false;
+            }
         }
     }
 
