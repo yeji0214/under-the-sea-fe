@@ -1,173 +1,93 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
 import TitleImage from "../assets/images/title.png";
 import ButtonAddProfileImage from "../assets/images/button-add-profile-image.png"
+import AuthForm from '../components/AuthForm.tsx';
+import useValidation from "../hooks/useValidation.tsx";
 
 const SignUpPage: React.FC = () => {
-    const [file, setFile] = useState<File>();
-    const [imageSrc, setImageSrc] = useState<string>("");
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
-    const [confirmPassword, setConfirmPassword] = useState<string>("");
-    const [nickname, setNickname] = useState<string>("");
-    const [isValid, setIsValid] = useState<boolean>(false);
-    const [profileImageHelperText, setProfileImageHelperText] = useState<string>("");
-    const [emailHelperText, setEmailHelperText] = useState<string>("");
-    const [passwordHelperText, setPasswordHelperText] = useState<string>("");
-    const [confirmPasswordHelperText, setConfirmPasswordHelperText] = useState<string>("");
-    const [nicknameHelperText, setNicknameHelperText] = useState<string>("");
+    const [formData, setFormData] = useState({
+        file: undefined as File | undefined,
+        imageSrc: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        nickname: "",
+    });
+
+    const [validation, setValidation] = useState({
+        isValid: false,
+        profileImageHelperText: "",
+        emailHelperText: "",
+        passwordHelperText: "",
+        confirmPasswordHelperText: "",
+        nicknameHelperText: "",
+    });
+
+    const { validateProfileImage, validateNewEmail, validatePassword, validateConfirmPassword, validateNickname } = useValidation();
 
     useEffect(() => {
-        validateInputs();
-    }, [imageSrc, email, password, confirmPassword, nickname]);
+        const validate = async () => {
+            await validateInputs();
+        };
+        validate();
+    }, [formData]);
+
+    // ✅ 입력값 변경 핸들러 (텍스트 입력)
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // ✅ 파일 입력 핸들러 (파일 업로드)
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+
+        setFormData(prev => ({
+            ...prev,
+            file: selectedFile,
+            imageSrc: selectedFile ? URL.createObjectURL(selectedFile) : ButtonAddProfileImage,
+        }));
+    };
 
     const validateInputs = async () => {
-        const isProfileImageValid = validateProfileImage(imageSrc);
-        const isEmailValid = await validateEmail(email);
-        const isPasswordValid = validatePassword(password);
-        const isConfirmPasswordValid = validateConfirmPassword(password, confirmPassword);
-        const isNicknameValid = await validateNickname(nickname);
+        const isProfileImageValid = validateProfileImage(formData.imageSrc, ButtonAddProfileImage);
+        const isEmailValid = await validateNewEmail(formData.email);
+        const isPasswordValid = validatePassword(formData.password);
+        const isConfirmPasswordValid = validateConfirmPassword(formData.password, formData.confirmPassword);
+        const isNicknameValid = await validateNickname(formData.nickname);
 
-        setIsValid(isProfileImageValid && isEmailValid && isPasswordValid && isConfirmPasswordValid && isNicknameValid);
-    };
-
-    const validateProfileImage = (imageSrc: string) => {
-        if (imageSrc === "" || imageSrc === ButtonAddProfileImage) {
-            setProfileImageHelperText("프로필 사진을 추가해주세요.");
-            return false;
-        }
-        else {
-            setProfileImageHelperText("");
-            return true;
-        }
-    };
-
-    const validateEmail = async (email: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const result = emailRegex.test(email);
-
-        if (!result) {
-            if (email === "") setEmailHelperText("이메일을 입력해주세요.");
-            else if (email.includes(' ')) setEmailHelperText("공백이 포함되어 있습니다.");
-            else setEmailHelperText("올바르지 않은 이메일입니다.");
-        }
-        else {
-            try {
-                const response = await fetch("http://localhost:8080/auth/users"); // 사용자 정보 fetch
-                const data = await response.json();
-                const existingEmail = data.find((user: { email: string; }) => user.email === email);
-                if (existingEmail) {
-                    setEmailHelperText("중복된 이메일입니다.");
-                    return false;
-                } else {
-                    setEmailHelperText("");
-                    return true;
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("회원가입 중 오류가 발생했습니다.");
-                return false;
-            }
-        }
-        return result;
-    };
-
-    const validatePassword = (password: string) => {
-        // 정규식: 영어 + 숫자 조합 5글자 이상
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+={}\[\]:;<>,.?/~\\|-]{5,}$/;
-        const result = passwordRegex.test(password);
-
-        if (password === "") setPasswordHelperText("비밀번호를 입력해주세요.");
-        else if (password.length < 5) setPasswordHelperText("비밀번호는 5글자 이상이어야 합니다.");
-        else if (password.includes(' ')) setPasswordHelperText("공백이 포함되어 있습니다.");
-        else if (!result) setPasswordHelperText("비밀번호는 영어 + 숫자 조합이어야 합니다.");
-        else setPasswordHelperText("");
-
-        return result;
-    };
-
-    const validateConfirmPassword = (password: string, confirmPassword: string) => {
-        if (password !== confirmPassword) {
-            if (confirmPassword === "")
-                setConfirmPasswordHelperText("");
-            else
-                setConfirmPasswordHelperText("비밀번호가 일치하지 않습니다.");
-            return false;
-        }
-        else {
-            setConfirmPasswordHelperText("");
-            return true;
-        }
-    };
-
-    const validateNickname = async (nickname: string) => {
-        if (nickname === "") {
-            setNicknameHelperText("닉네임을 입력해주세요.");
-            return false;
-        }
-        else if (nickname.includes(' ')) {
-            setNicknameHelperText("공백이 포함되어 있습니다.");
-            return false;
-        }
-        else if (nickname.length > 10) {
-            setNicknameHelperText("닉네임은 최대 10글자까지 설정 가능합니다.");
-            return false;
-        }
-        else {
-            try {
-                const response = await fetch("http://localhost:8080/auth/users");// 사용자 정보 fetch
-                const data = await response.json();
-                const existingNickname = data.find((user: { nickname: string; }) => user.nickname === nickname);
-                if (existingNickname) {
-                    setNicknameHelperText("중복된 닉네임입니다.");
-                    return false;
-                } else {
-                    setNicknameHelperText("");
-                    return true;
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("회원가입 중 오류가 발생했습니다.");
-                return false;
-            }
-        }
-    }
-
-
-    const changeProfile = (e: ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        
-        if (selectedFile) {
-            setFile(selectedFile);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setImageSrc(event.target?.result as string);
-            };
-            reader.readAsDataURL(selectedFile);
-        }
-        else {
-            setImageSrc(ButtonAddProfileImage);
-            setFile(undefined);
-        }
+        setValidation((prev) => ({
+            ...prev,
+            profileImageHelperText: isProfileImageValid,
+            emailHelperText: isEmailValid,
+            passwordHelperText: isPasswordValid,
+            confirmPasswordHelperText: isConfirmPasswordValid,
+            nicknameHelperText: isNicknameValid,
+            isValid: isProfileImageValid === "" && isEmailValid === "" && isPasswordValid === "" && isConfirmPasswordValid === "" && isNicknameValid === ""
+        }));
     };
 
     const registerUser = async (event: { preventDefault: () => void; }) => {
         event.preventDefault();
 
         // FormData 준비
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
-        formData.append('confirmPassword', confirmPassword); // 추가
-        formData.append('nickname', nickname);
-        if (file) {
-            formData.append('profilePicture', file);
+        const formDataToTransfer = new FormData();
+        formDataToTransfer.append('email', formData.email);
+        formDataToTransfer.append('password', formData.password);
+        formDataToTransfer.append('confirmPassword', formData.confirmPassword); // 추가
+        formDataToTransfer.append('nickname', formData.nickname);
+        if (formData.file) {
+            formDataToTransfer.append('profilePicture', formData.file);
         }
 
         try {
             // 서버로 회원가입 요청
             const response = await fetch('http://localhost:8080/auth/register', {
                 method: 'POST',
-                body: formData,
+                body: formDataToTransfer,
             });
 
             if (response.ok) {
@@ -193,107 +113,20 @@ const SignUpPage: React.FC = () => {
                         className="w-36 mb-8"
                     />
                 </div>
-                <form className="space-y-6" onSubmit={registerUser}>
-                    <div className="flex flex-col">
-                        <label htmlFor="profileImageInput" className="block text-sm font-medium text-gray-700 p-2">
-                            프로필 사진
-                        </label>
-                        <p className={`text-xs text-red-500 pl-2 ${profileImageHelperText !== "" ? "visible" : "invisible"}`}>{profileImageHelperText}</p>
-                        <label htmlFor="profileImageInput" className="w-[100px] h-[100px] bg-white rounded-full flex items-center justify-center cursor-pointer overflow-hidden mx-auto">
-                            <img src={imageSrc || ButtonAddProfileImage} alt="Profile Preview" className="w-full h-full object-cover" />
-                        </label>
-                        <input
-                            type="file"
-                            id="profileImageInput"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={changeProfile}
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 pl-1">
-                            이메일
-                        </label>
-                        <input
-                            type="text"
-                            id="email"
-                            value={email}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                setEmail(e.target.value)
-                            }
-                            className="peer w-full h-12 p-3 text-gray-700 border-b border-gray-300 rounded-lg focus:outline-none focus:border-[#4e9af7] placeholder-transparent hover:border-[#bbd9ff]"
-                            placeholder="email"
-                        />
-                        <p className={`text-xs text-red-500 pl-1 ${emailHelperText !== "" ? "visible" : "invisible"}`}>{emailHelperText}</p>
-                    </div>
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 pl-1">
-                            비밀번호
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                setPassword(e.target.value)
-                            }
-                            className="peer w-full h-12 p-3 text-gray-700 border-b border-gray-300 rounded-lg focus:outline-none focus:border-[#4e9af7] placeholder-transparent hover:border-[#bbd9ff]"
-                            placeholder="password"
-                        />
-                        <p className={`text-xs text-red-500 pl-1 ${passwordHelperText !== "" ? "visible" : "invisible"}`}>{passwordHelperText}</p>
-                    </div>
-                    <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 pl-1">
-                            비밀번호 확인
-                        </label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                setConfirmPassword(e.target.value)
-                            }
-                            className="peer w-full h-12 p-3 text-gray-700 border-b border-gray-300 rounded-lg focus:outline-none focus:border-[#4e9af7] placeholder-transparent hover:border-[#bbd9ff]"
-                            placeholder="cofirmPassword"
-                        />
-                        <p className={`text-xs text-red-500 pl-1 ${confirmPasswordHelperText !== "" ? "visible" : "invisible"}`}>{confirmPasswordHelperText}</p>
-                    </div>
-                    <div>
-                        <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 pl-1">
-                            닉네임
-                        </label>
-                        <input
-                            type="text"
-                            id="nickname"
-                            value={nickname}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                setNickname(e.target.value)
-                            }
-                            className="peer w-full h-12 p-3 text-gray-700 border-b border-gray-300 rounded-lg focus:outline-none focus:border-[#4e9af7] placeholder-transparent hover:border-[#bbd9ff]"
-                            placeholder="nickname"
-                        />
-                        <p className={`text-xs text-red-500 pl-1 ${nicknameHelperText !== "" ? "visible" : "invisible"}`}>{nicknameHelperText}</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <button
-                            disabled={!isValid}
-                            type="submit"
-                            className={`w-full bg-[#bbd9ff] text-gray-900 py-2 px-4 rounded-xl text-sm ${isValid ? "hover:bg-[#94c1fb]" : "cursor-not-allowed"}`}
-                        >
-                            회원가입
-                        </button>
-                        <a
-                            href="sign-in"
-                            className="w-full mt-4 text-sm text-center text-gray-500 hover:text-gray-700"
-                        >
-                            로그인하러 가기
-                        </a>
-                    </div>
-                </form>
+                <AuthForm
+                    fields={[
+                        { label: "프로필 사진", type: "file", name: "profileImage", value: formData.imageSrc, onChange: handleFileChange, helperText: validation.profileImageHelperText },
+                        { label: "이메일", type: "text", name: "email", value: formData.email, onChange: handleInputChange, helperText: validation.emailHelperText },
+                        { label: "비밀번호", type: "password", name: "password", value: formData.password, onChange: handleInputChange, helperText: validation.passwordHelperText },
+                        { label: "비밀번호 확인", type: "password", name: "confirmPassword", value: formData.confirmPassword, onChange: handleInputChange, helperText: validation.confirmPasswordHelperText },
+                        { label: "닉네임", type: "text", name: "nickname", value: formData.nickname, onChange: handleInputChange, helperText: validation.nicknameHelperText },
+                    ]}
+                    buttonText="회원가입"
+                    onSubmit={registerUser}
+                    isValid={validation.isValid}
+                />
             </div>
         </div>
-
-
     );
 };
 
