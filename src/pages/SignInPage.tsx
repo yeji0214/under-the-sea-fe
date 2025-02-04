@@ -3,19 +3,19 @@ import TitleImage from "../assets/images/title.png";
 import { useState } from "react";
 import AuthForm from '../components/AuthForm.tsx';
 import useValidation from '../hooks/useValidation.tsx';
+import ToastNotification from '../components/ToastNotification.tsx';
 
 const SignInPage: React.FC = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
   const [validation, setValidation] = useState({
     isValid: false,
     emailHelperText: "",
     passwordHelperText: "",
   });
-
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const { validateEmail, validatePassword } = useValidation();
 
   useEffect(() => {
@@ -53,23 +53,20 @@ const SignInPage: React.FC = () => {
       const token = await response.text();
       sessionStorage.setItem('jwtToken', token);
 
-      setValidation((prev) => ({
-        ...prev,
-        passwordHelperText: "성공 !"
-      }));
-      // setHelperTextColor('blue');
-      // setTimeout(() => {
-      //   redirectToPostListPage();
-      // }, 3000);
-    } else {
-      // setPasswordHelperText('* 이메일 또는 비밀번호를 다시 확인해주세요.');
+      setShowSuccessToast(true);
+    }
+    else {
       setValidation((prev) => ({
         ...prev,
         passwordHelperText: "이메일 또는 비밀번호를 다시 확인해주세요."
       }));
-      // setHelperTextColor('red');
     }
   };
+
+  const closeSuccessToast = () => {
+    setShowSuccessToast(false);
+    window.location.href = '/list-of-posts';
+  }
 
   return (
     <div className="flex justify-center items-center h-screen bg-blue-100">
@@ -87,6 +84,7 @@ const SignInPage: React.FC = () => {
           isValid={validation.isValid}
         />
       </div>
+      {showSuccessToast && <ToastNotification onClose={closeSuccessToast} />}
     </div>
   );
 };
