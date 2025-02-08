@@ -35,7 +35,7 @@ const PostItem: React.FC<PostItemProps> = ({ post }) => {
                 <div className="font-sm mt-2 mb-3"><small>좋아요 {post.likesCount} 댓글 {post.commentsCount} 조회수 {post.viewsCount}</small></div>
                 <hr />
                 <div className="flex mt-3">
-                    <img src={`http://localhost:8080/uploads/${post.user.profilePicture}`} className="w-8 h-8 rounded-full" />
+                    <img src={`http://localhost:8080/uploads/${post.user.profilePicture}`} className="w-8 h-8 rounded-full object-cover" />
                     <div className="ml-3 mt-1 text-sm font-medium"><small><b>{post.user.nickname}</b></small></div>
                 </div>
 
