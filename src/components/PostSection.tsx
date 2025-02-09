@@ -1,13 +1,15 @@
 import React, { useEffect } from "react";
 import { PostType } from "../pages/types";
 import { formatDateTime } from "../utils/formatDate.ts";
+import CommentSection from "./CommentSection.tsx";
 
 interface PostSectionProps {
     post: PostType;
     currentUserEmail: string;
+    comments: any[];
 }
 
-const PostSection: React.FC<PostSectionProps> = ({ post, currentUserEmail }) => {
+const PostSection: React.FC<PostSectionProps> = ({ post, currentUserEmail, comments }) => {
     return (
         <div className="flex flex-col items-center min-h-screen bg-blue-100">
             <section className="bg-blue-200 mt-5 rounded-lg w-[450px] p-5">
@@ -39,15 +41,8 @@ const PostSection: React.FC<PostSectionProps> = ({ post, currentUserEmail }) => 
                     </div>
                 </section>
             </section>
-            <hr className="mt-2 w-[450px] border-white"/>
-            {/* <section className="comment-register-space">
-                <textarea className="input-comment" placeholder="댓글을 남겨주세요!"></textarea>
-                <hr />
-                    <button className="comment-register-button" onclick="registerComment()">댓글 등록</button>
-            </section>
-            <section className="comment-list-space">
-                댓글 목록이 여기에 동적으로 삽입됩니다
-            </section> */}
+            <hr className="mt-2 mb-3 w-[450px] border-white"/>
+            <CommentSection comments={comments} currentUserEmail={currentUserEmail}/>
         </div>
     );
 }
